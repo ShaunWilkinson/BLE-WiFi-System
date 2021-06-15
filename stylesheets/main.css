@@ -1,0 +1,21 @@
+#logo {
+    width: 45px;
+    height: 35px;
+}
+
+#main-content {
+    margin-top:20px;
+}
+
+body {
+    min-height: 100vh;
+}
+
+.footer {
+    font-size: 14px;
+    text-align: center;
+}
+
+#mapid {
+    height: 600px;
+}
