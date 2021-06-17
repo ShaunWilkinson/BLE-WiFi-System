@@ -53,20 +53,26 @@
             # Loop through each gateway
             foreach($gateways as $name => $coord) {
                 # Return the last result from each gateway for the selected asset
-                $query = "SELECT * FROM tag_data WHERE gateway == '{$name}' AND tagMac == '{$_POST['selectedAsset']}' AND measureName == 'rssi' ORDER BY submitTime DESC LIMIT 1";
+                $query = "SELECT * FROM tag_data WHERE gateway == '{$name}' AND tagMac == '{$_POST['selectedAsset']}' AND measureName == 'rssi' ORDER BY submitTime DESC LIMIT 3";
                 $data = $db->query($query);
 
-                # Get the last RSSI value from each gateway to the tag
+                # Get the last several RSSI values from each gateway to the tag
+                $lastRSSIs = [];
                 while ($row = $data->fetchArray()) {
-                    # For each gateway, calculate the radius of the circle
-                    $radius = calculateDistance(-60, $row['value']);
-
-                    # Populate the points array with the x, y & radius of each point
-                    $coords = explode(",", $coord);
-                    array_push($points, [$coords[0], $coords[1], $radius]);
-
-                    console_log($name . ", " . $row['value'] . ", " . calculateDistance(-60, $row['value']));
+                    array_push($lastRSSIs, $row['value']);
                 }
+
+                # Get the average value of the past several RSSI values
+                $averageRSSI = array_sum($lastRSSIs)/count($lastRSSIs);
+
+                # For each gateway, calculate the radius of the circle
+                $radius = calculateDistance(-60, $averageRSSI);
+
+                # Populate the points array with the x, y & radius of each point
+                $coords = explode(",", $coord);
+                array_push($points, [$coords[0], $coords[1], $radius]);
+
+                console_log($name . ", " . $averageRSSI . ", " . calculateDistance(-60, $row['value']));
             }
 
             # Sort the points array by the smallest radius to the largest
