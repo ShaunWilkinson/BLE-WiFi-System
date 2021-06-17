@@ -53,7 +53,7 @@
             # Loop through each gateway
             foreach($gateways as $name => $coord) {
                 # Return the last result from each gateway for the selected asset
-                $query = "SELECT * FROM tag_data WHERE gateway == '{$name}' AND tagMac == '{$_POST['selectedAsset']}' ORDER BY submitTime DESC LIMIT 1";
+                $query = "SELECT * FROM tag_data WHERE gateway == '{$name}' AND tagMac == '{$_POST['selectedAsset']}' AND measureName == 'rssi' ORDER BY submitTime DESC LIMIT 1";
                 $data = $db->query($query);
 
                 # Get the last RSSI value from each gateway to the tag
@@ -66,9 +66,6 @@
                     array_push($points, [$coords[0], $coords[1], $radius]);
 
                     console_log($name . ", " . $row['value'] . ", " . calculateDistance(-60, $row['value']));
-                    #Store the x, y and radius for each point
-                    #Select the 3 points with lowest radius
-                    #pass the 3 points to a function to calculate point
                 }
             }
 
@@ -82,6 +79,7 @@
             });
 
 
+            # If there is actually 3 points to perform trilateration then calculate the point
             if(sizeof($points) >= 3) {
                 $estimatedCoordinate = trilaterate($points[0], $points[1], $points[2]);
                 console_log("Estimated coordinate: " . implode(", ", $estimatedCoordinate));
@@ -109,12 +107,14 @@
             <hr style="width:75%">
             
             <?php if(!empty($estimatedCoordinate)) { ?>
+
+                <h2> Selected Asset location</h2>
                 <p>The selected asset is currently located at coordinate <?php echo implode(", ", $estimatedCoordinate); ?></p>
+                <hr style="width:75%">
             <?php } ?>
 
-            <hr style="width:75%">
+            
             <?php include("includes/inventory_map.php");?>
-            <?php include("includes/inventory_map2.php");?>
             <?php include("includes/asset_list_dropdown.php");?>
 
             <?php if(!empty($_POST['selectedAsset'])) { ?>
