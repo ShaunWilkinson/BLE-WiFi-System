@@ -5,6 +5,7 @@
 
     $db = DB::getInstance();
     $gateways = []; # Holds all the gateway data, Name + Location
+    $demoData = "<table><tr><th>Gateway Name</th> <th>Average RSSI</th> <th>Estimated Distance</th><th>Last Update</th></tr>"; # Holds data used to demonstrate how the prediction is made
 
     # Ensure that there is a connection to the database
     if(!$db) {
@@ -53,13 +54,15 @@
             # Loop through each gateway
             foreach($gateways as $name => $coord) {
                 # Return the last result from each gateway for the selected asset
-                $query = "SELECT * FROM tag_data WHERE gateway == '{$name}' AND tagMac == '{$_POST['selectedAsset']}' AND measureName == 'rssi' ORDER BY submitTime DESC LIMIT 3";
+                $query = "SELECT * FROM tag_data WHERE gateway == '{$name}' AND tagMac == '{$_POST['selectedAsset']}' AND measureName == 'rssi' ORDER BY submitTime DESC LIMIT 4";
                 $data = $db->query($query);
 
                 # Get the last several RSSI values from each gateway to the tag
                 $lastRSSIs = [];
+                $lastUpdate = 0;
                 while ($row = $data->fetchArray()) {
                     array_push($lastRSSIs, $row['value']);
+                    $lastUpdate = $row['submitTime'];
                 }
 
                 # Get the average value of the past several RSSI values
@@ -72,8 +75,10 @@
                 $coords = explode(",", $coord);
                 array_push($points, [$coords[0], $coords[1], $radius]);
 
-                console_log($name . ", " . $averageRSSI . ", " . calculateDistance(-60, $row['value']));
+                $lastUpdate = date('r', $lastUpdate);
+                $demoData .= "<tr><td>" . $name . "</td><td>" . round($averageRSSI, 2) . "</td><td>" . round(calculateDistance(-60, $averageRSSI), 2) . "</td><td>" . $lastUpdate . "</td>/tr>";
             }
+            $demoData .= "</table>";
 
             # Sort the points array by the smallest radius to the largest
             usort($points, function($a, $b) {
@@ -112,16 +117,20 @@
             <p>This page shows the warehouse area used to demonstrate the tracking technology. In a real environment it would likely be best to have a more detailed grid with increased zoom levels to accurately show individual assets.</p>
             <hr style="width:75%">
             
+
+            <?php include("includes/asset_list_dropdown.php");?>
+
+            
             <?php if(!empty($estimatedCoordinate)) { ?>
 
                 <h2> Selected Asset location</h2>
-                <p>The selected asset is currently located at coordinate <?php echo implode(", ", $estimatedCoordinate); ?></p>
+                <p>The selected asset is currently located at <?php echo $estimatedCoordinate[0] ?> metres from the left and <?php echo $estimatedCoordinate[1] ?> metres from the bottom of the space.</p>
+                <p>This is based on the following data - <br> <?php echo $demoData ?></p>
                 <hr style="width:75%">
             <?php } ?>
 
             
             <?php include("includes/inventory_map.php");?>
-            <?php include("includes/asset_list_dropdown.php");?>
 
             <?php if(!empty($_POST['selectedAsset'])) { ?>
                 <p>You selected <?php echo $_POST['selectedAsset']; ?></p>

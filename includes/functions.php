@@ -25,6 +25,7 @@
     }
 
     # Function to calculate rough distance to beacon - https://developer.radiusnetworks.com/2014/12/04/fundamentals-of-beacon-ranging.html
+    # values based on Nexus 4 but appears to hold up well for NRF51822 chips
     function calculateDistance($txPower, $rssi) {
 
         if ($rssi == 0) {

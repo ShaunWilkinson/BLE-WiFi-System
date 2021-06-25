@@ -19,3 +19,7 @@ body {
 #mapid {
     height: 600px;
 }
+
+th, td {
+    padding: 2px 16px;
+}
